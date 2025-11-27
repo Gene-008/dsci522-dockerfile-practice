@@ -1,0 +1,8 @@
+name: dsci522-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - scikit-learn=1.5.1
+  - pandas=2.2.2
+prefix: /Users/tseeugene/miniforge3/envs/dsci522-env
