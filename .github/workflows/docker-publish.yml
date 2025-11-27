@@ -1,0 +1,69 @@
+name: Build and publish Docker image
+
+on:
+  push:
+    paths:
+      - Dockerfile
+      - .github/workflows/docker-publish.yml
+  workflow_dispatch:
+
+env:
+  # 🔧 EDIT THIS: change to your DockerHub username
+  DOCKER_IMAGE: tseugene/dsci522-dockerfile-practice
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Create a version string (e.g. v5) based on GitHub run number
+      - name: Set version
+        id: version
+        run: |
+          VERSION="v${GITHUB_RUN_NUMBER}"
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:latest
+            ${{ env.DOCKER_IMAGE }}:${{ steps.version.outputs.VERSION }}
+
+      # Version the Git repo by creating a tag pointing to this commit
+      - name: Create git tag for this build
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const version = '${{ steps.version.outputs.VERSION }}';
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = context.sha;
+
+            // Try to create the tag – if it exists, just skip
+            try {
+              await github.rest.git.createRef({
+                owner,
+                repo,
+                ref: `refs/tags/${version}`,
+                sha,
+              });
+              core.info(`Created tag ${version}`);
+            } catch (error) {
+              core.warning(`Tag ${version} already exists or could not be created: ${error.message}`);
+            }
