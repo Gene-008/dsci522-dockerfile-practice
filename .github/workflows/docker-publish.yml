@@ -9,7 +9,7 @@ on:
 
 env:
   # 🔧 EDIT THIS: change to your DockerHub username
-  DOCKER_IMAGE: tseugene/dsci522-dockerfile-practice
+  DOCKER_IMAGE: tseeugene/dsci522-dockerfile-practice
 
 jobs:
   build-and-push:
